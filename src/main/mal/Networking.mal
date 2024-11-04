@@ -21,7 +21,6 @@ category Networking {
       developer info: "The network asset tries to cover all the levels of the OSI stack in a very abstract and compact way (i.e. it tries to represent all the OSI layers). For example it will try to cover both ARP attacks (that are Level 2) but also DNS/HTTP spoofing attacks (that are Level 7)."
     {
       let outboundAllowedConnections = (netConnections \/ outgoingNetConnections)
-      let inboundAllowedConnections = (netConnections \/ ingoingNetConnections \/ diodeIngoingNetConnections)
       let allNetConnections = (netConnections \/ ingoingNetConnections \/ outgoingNetConnections \/ diodeIngoingNetConnections)
       let allowedApplicationConnectionsApplications = (applications \/ allNetConnections().applications)
 
@@ -78,7 +77,6 @@ category Networking {
         ->  outboundAllowedConnections().attemptConnectToApplicationsUninspected,
             applications.networkConnectUninspected,
             networkForwardingUninspected,
-            attemptReverseReach,
             accessNetworkData,
             deny
 
@@ -89,15 +87,6 @@ category Networking {
             networkForwardingInspected,
             accessNetworkData,
             deny
-
-      | attemptReverseReach @hidden
-        developer info: "Intermediate attack step to allow for defenses."
-        ->  reverseReach
-
-      & reverseReach @hidden
-        developer info: "Reverse reach is used to determine whether or not the attacker can be reached by the user. Reverse reach propagates toward outgoing or bidirectional communications."
-        ->  inboundAllowedConnections().attemptReverseReach,
-            applications.attemptReverseReach
 
       | networkForwardingUninspected @hidden
         developer info: "By using the allowed connections (connection rules), uninspected forwarding from one network to another network or applications can happen."
@@ -170,8 +159,7 @@ category Networking {
       | adversaryInTheMiddle {C, I}
         user info: "An attacker that performs a AitM attack on a network tries to read and modify all the transferred data over that network."
         ->  eavesdrop,
-            transitData.attemptWrite,
-            transitData.attemptApplicationRespondConnect
+            transitData.attemptWrite
     }
 
     asset RoutingFirewall extends Application
@@ -192,7 +180,6 @@ category Networking {
       developer info: "This asset is mainly used to model the functionality of a network connection through a firewall. If Data is added, then it also models the data in transit."
     {
       let allApplications = (applications \/ inApplications \/ outApplications)
-      let senderApplications = (applications \/ outApplications)
       let receiverApplications = (applications \/ inApplications)
 
       # restricted [Disabled]
@@ -209,8 +196,7 @@ category Networking {
             successfulAccessNetworksInspected,
             connectToApplicationsUninspected,
             connectToApplicationsInspected,
-            deny,
-            reverseReach
+            deny
 
       # payloadInspection [Disabled]
         user info: "If enabled, then the traffic is considered to be inspected and filtered by an IDPS that can detect and stop malicious payloads, effectively allowing only legitimate communication(i.e. network-level vulnerabilities cannot be exploited, unsafe actions that the user may taken that would benefit the attacker are also prevented)."
@@ -223,20 +209,7 @@ category Networking {
       | payloadInspectionBypassed @hidden
         developer info: "Payload inspection is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
         ->  successfulAccessNetworksUninspected,
-            connectToApplicationsUninspected,
-            reverseReach
-
-      // All the hidden attack steps below are hidden because they are just used for the internal mechanics of the ConnectionRules
-      | attemptReverseReach @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  reverseReach,
-            bypassRestricted,
-            bypassPayloadInspection
-
-      & reverseReach @hidden
-        developer info: "Reverse reach is used to determine whether or not the attacker can be reached by the user. Reverse reach propagates via outgoing or bidirectional communications."
-        ->  senderApplications().attemptReverseReach,
-            (networks \/ outNetworks).attemptReverseReach
+            connectToApplicationsUninspected
 
       | attemptAccessNetworksUninspected @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."

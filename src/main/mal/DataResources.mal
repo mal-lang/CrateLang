@@ -74,8 +74,7 @@ category DataResources {
       # notPresent [Disabled]
         user info: "This defense is used to reason about the attack vectors introduced by this asset. It should be used to model the possibility of data not existing on the associated container (i.e. Hardware, Application, Network, etc.)."
         developer info: "Enabling this defense should make the asset behave as if it did not exist, as such all of its impactful attack steps should be disabled by it."
-        ->  applicationRespondConnect,
-            successfulRead,
+        ->  successfulRead,
             successfulWrite,
             successfulDeny,
             successfulDelete,
@@ -122,36 +121,13 @@ category DataResources {
 
       | accessSpoofedData @hidden
         developer info: "Intermediate attack step to only allow effects of 'accessUnsignedData' on data after compromising the signing credentials or signing is disabled."
-        ->  applicationRespondConnect,
-            successfulWrite
+        ->  successfulWrite
 
       | accessDecryptedData @hidden
         developer info: "Intermediate attack step to only allow effects of 'accessUnencryptedData' on data after compromising the encryption credentials or encryption is disabled."
-        ->  applicationRespondConnect,
-            successfulRead,
+        ->  successfulRead,
             successfulWrite,
             successfulDelete
-
-      | attemptApplicationRespondConnect @hidden
-        developer info: "Intermediate attack step to handle defenses."
-        ->  applicationRespondConnect
-
-      & applicationRespondConnect @hidden
-        developer info: "In order to perform a respond connect attack the adversary must be able to write the received data."
-        ->  senderApp.attemptNetworkConnectFromResponse,
-            containedData.applicationRespondConnect
-
-      | authorizedApplicationRespondConnectFromApplication @hidden
-        developer info: "The adversary can attempt a respond connect attack from an Application, but they still require write permissions in order to perform it."
-        ->  authorizedApplicationRespondConnect
-
-      | authorizedApplicationRespondConnectFromIAM @hidden
-        developer info: "The attacker has obtained the access control permissions required to modify the incoming requests."
-        ->  authorizedApplicationRespondConnect
-
-      & authorizedApplicationRespondConnect @hidden
-        developer info: "In order to perform a respond connect attack the adversary must be able to write the received data. If they only have specific access on the Application we need to see if they also have the required permissions."
-        ->  attemptApplicationRespondConnect
 
       | attemptRead @hidden
         developer info: "Intermediate attack step to allow for defenses."
@@ -282,8 +258,6 @@ associations {
       user info: "An application can also receive some data that are supposed to be transferred over a network or connection. This expresses an active connection."
   Data        [transitData]          * <-- DataInTransit         --> *    [transitNetwork]         Network
       user info: "A network can also contain some data that are supposed to be network-wide available."
-  Data        [hostedData]           * <-- DataHosting           --> 0..1 [hardware]               Hardware
-      user info: "Data can be hosted on hardware."
   Data        [containerData]        * <-- InfoContainment       --> *    [information]            Information
       user info: "Data can contain information, as for example credentials."
   Data        [dataReplicas]         * <-- Replica               --> *    [replicatedInformation]  Information
