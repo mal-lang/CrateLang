@@ -56,18 +56,14 @@ category Networking {
 
       | adversaryInTheMiddleDefenseBypassed @hidden
         developer info: "The adversary in the middle defense is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  successfulAdversaryInTheMiddle
+        ->  adversaryInTheMiddle
 
       | attemptAdversaryInTheMiddle @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulAdversaryInTheMiddle,
+        ->  adversaryInTheMiddle,
             bypassAdversaryInTheMiddleDefense
 
-      & successfulAdversaryInTheMiddle @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  adversaryInTheMiddle
-
-      | adversaryInTheMiddle {C, I}
+      & adversaryInTheMiddle {C, I}
         user info: "An attacker that performs a AitM attack on a network tries to read and modify all the transferred data over that network."
         ->  transitData.attemptRead,
             transitData.attemptWrite
@@ -76,7 +72,7 @@ category Networking {
     asset RoutingFirewall extends Application
       user info: "A routing firewall specifies a router with firewall capabilities that connects many networks."
     {
-      | deny {A}
+      & deny {A}
        user info: "A DoS attack should cascade on the connected networks and associated connections"
         ->  connectionRules.attemptDeny
 
@@ -103,20 +99,16 @@ category Networking {
 
       | restrictedBypassed @hidden
         developer info: "The restricted defense is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  successfulAccessNetworks,
+        ->  accessNetworks,
             connectToApplications,
             deny
 
       | attemptAccessNetworks @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulAccessNetworks,
+        ->  accessNetworks,
             bypassRestricted
 
-      & successfulAccessNetworks @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  accessNetworks
-
-      | accessNetworks
+      & accessNetworks
         developer info: "Access all networks that are associated with this ConnectionRule, without any restriction due to inspection."
         ->  (networks  \/ inNetworks  \/ diodeInNetworks).access
 

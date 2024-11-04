@@ -26,25 +26,21 @@ category ComputeResources {
       # notPresent [Disabled]
         user info: "This defense is used to reason about the attack vectors introduced by this asset. It should be used to model the possibility that the Application does not actually exist. Typically this is useful to see what attack steps are removed if a particular non-essential component(e.g. a plugin, library, feature, or service)."
         developer info: "This defense allows for both speculation about the presence of a particular application and to suggest that if it is possible removing it may restrict the attacker's actions."
-        ->  successfulUseVulnerability,
+        ->  useVulnerability,
             specificAccessFromLocalConnection,
             specificAccessFromNetworkConnection,
             localAccess,
             networkAccess,
-            successfulRead,
-            successfulModify,
-            successfulDeny
+            read,
+            modify,
+            deny
 
       | attemptUseVulnerability @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulUseVulnerability,
+        ->  useVulnerability,
             protectorIDPSs.bypassEffectiveness
 
-      & successfulUseVulnerability @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  useVulnerability
-
-      | useVulnerability
+      & useVulnerability
         user info: "Try to exploit the associated vulnerabilities."
         developer info: "This includes vulnerabilities associated with the SoftwareProduct that this Application is running as well."
         ->  allVulnerabilities().attemptAbuse
@@ -126,13 +122,9 @@ category ComputeResources {
 
       | attemptRead @hidden
         developer info: "Intermediate attack step to allow for defenses."
-        ->  successfulRead
-
-      & successfulRead @hidden
-        developer info: "Intermediate attack step to model defenses."
         ->  read
 
-      | read {C}
+      & read {C}
         user info: "The attacker can read some or all of this service's (and executed by this) source code and/or data (both local and sent/received)."
         ->  containedData.attemptRead,
             appExecutedApps.attemptRead, // Read all applications executed by this (host) application
@@ -147,13 +139,9 @@ category ComputeResources {
 
       | attemptModify @hidden
         developer info: "Intermediate attack step to allow for defenses."
-        ->  successfulModify
-
-      & successfulModify @hidden
-        developer info: "Intermediate attack step to model defenses."
         ->  modify
 
-      | modify {I}
+      & modify {I}
         user info: "The attacker can modify some or all of this service's (and executed by this) source code and/or data."
         ->  fullAccess,
             containedData.attemptWrite,
@@ -167,13 +155,9 @@ category ComputeResources {
 
       | attemptDeny @hidden
         developer info: "Intermediate attack step to allow for defenses."
-        ->  successfulDeny
-
-      & successfulDeny @hidden
-        developer info: "Intermediate attack step to model defenses."
         ->  deny
 
-      | deny {A}
+      & deny {A}
         user info: "The attacker can deny some or all functionality and data pertaining to this application/service as well as executed applications."
         ->  containedData.attemptDeny,
             appExecutedApps.attemptDeny,
@@ -212,13 +196,13 @@ category ComputeResources {
 
       | effectivenessBypassed @hidden
         developer info: "The protection of the IDPS has been bypassed either as a result of attacker activity or due to some internal property of the IDPS."
-        ->  protectedApps.successfulUseVulnerability
+        ->  protectedApps.useVulnerability
 
       | fullAccess {C,I,A}
         user info: "The IDPS is no longer able to protect the apps assigned to it if it has been compromised itself."
         +>  effectivenessBypassed
 
-      | deny {A}
+      & deny {A}
         developer info: "The IDPS is no longer able to protect the apps assigned to it if it has been denied itself."
         +>  effectivenessBypassed
     }
