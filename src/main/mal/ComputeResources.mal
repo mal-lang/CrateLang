@@ -56,18 +56,6 @@ category ComputeResources {
             attemptUseVulnerability, // Attempt to exploit all the vulnerabilities associated with the Application
             allVulnerabilities().localAccessAchieved
 
-      | networkConnectUninspected
-        user info: "An attacker can connect to any network exposed application and try to authenticate or trigger vulnerabilities."
-        ->  attemptUseVulnerability, // Attempt to exploit all the vulnerabilities associated with the Application
-            allVulnerabilities().networkAccessAchieved,
-            networkConnect,
-            specificAccessNetworkConnect
-
-      | networkConnectInspected
-        user info: "If the network communications occur via any ConnectionRules that have their payload inspected the attacker can still authenticate, but they cannot trigger vulnerabilities."
-        ->  networkConnect,
-            specificAccessNetworkConnect
-
       | networkConnect @hidden
         developer info: "Intermediate attack step."
         ->  networkAccess
@@ -78,12 +66,9 @@ category ComputeResources {
 
       | accessNetworkAndConnections @hidden
         developer info: "The attacker can access outgoing and bidirectional networks and connections associated with the application."
-        ->  networks.accessUninspected,
-            networks.accessInspected,
-            outgoingApplicationConnections().attemptConnectToApplicationsUninspected,
-            outgoingApplicationConnections().attemptConnectToApplicationsInspected,
-            outgoingApplicationConnections().attemptAccessNetworksUninspected,
-            outgoingApplicationConnections().attemptAccessNetworksInspected
+        ->  networks.access,
+            outgoingApplicationConnections().attemptConnectToApplications,
+            outgoingApplicationConnections().attemptAccessNetworks
 
       & specificAccessFromLocalConnection @hidden
         developer info: "Intermediate attack steps for modeling the two requirements (reachability and authentication) for specific access."

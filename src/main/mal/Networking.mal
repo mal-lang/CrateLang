@@ -24,80 +24,18 @@ category Networking {
       let allNetConnections = (netConnections \/ ingoingNetConnections \/ outgoingNetConnections \/ diodeIngoingNetConnections)
       let allowedApplicationConnectionsApplications = (applications \/ allNetConnections().applications)
 
-      | physicalAccess @entrypoint {C, A}
-        user info: "Attacker has physical access on the network. This means they can cut wires/fibers, connect using iLOs, eavesdrop and get proper network access."
-        modeler info: "This attack step can be used as an entry point when analyzing scenarios that involve gaining physical access to assets."
-        ->  deny,
-            attemptAccessUninspectedFromPhysicalAccess,
-            attemptAccessInspectedFromPhysicalAccess,
-            bypassEavesdropDefenseFromPhysicalAccess,
-            bypassAdversaryInTheMiddleDefenseFromPhysicalAccess
-
-      | bypassEavesdropDefenseFromPhysicalAccess
-        user info: "The eavesdrop defense can be bypassed more easily if the attacker has physical access to the network. This attack step will add its impact to the unconditional bypass."
-        ->  eavesdropDefenseBypassed
-
-      | bypassAdversaryInTheMiddleDefenseFromPhysicalAccess
-        user info: "The adversary in the middle defense can be bypassed more easily if the attacker has physical access to the network. This attack step will add its impact to the unconditional bypass."
-        ->  adversaryInTheMiddleDefenseBypassed
-
-      # networkAccessControl
-        user info: "Access control protects from unauthorized physical access on the network."
-        ->  accessControlBypassed
-
-      | bypassAccessControl [VeryHardAndUncertain]
-        user info: "If access control is enabled, the attacker can still try to bypass it and gain access on the network."
-        ->  accessControlBypassed
-
-      | accessControlBypassed @hidden
-        developer info: "Access control is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  successfulAccessUninspectedFromPhysicalAccess,
-            successfulAccessInspectedFromPhysicalAccess
-
-      | attemptAccessUninspectedFromPhysicalAccess @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulAccessUninspectedFromPhysicalAccess,
-            bypassAccessControl
-
-      | attemptAccessInspectedFromPhysicalAccess @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulAccessInspectedFromPhysicalAccess,
-            bypassAccessControl
-
-      & successfulAccessUninspectedFromPhysicalAccess @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  accessUninspected
-
-      & successfulAccessInspectedFromPhysicalAccess @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  accessInspected
-
-      | accessUninspected
+      | access
         user info: "Uninspected access provides connect to all reachable applications without any restrictions."
-        ->  outboundAllowedConnections().attemptConnectToApplicationsUninspected,
-            applications.networkConnectUninspected,
-            networkForwardingUninspected,
+        ->  outboundAllowedConnections().attemptConnectToApplications,
+            applications.networkConnect,
+            networkForwarding,
             accessNetworkData,
             deny
 
-      | accessInspected
-        user info: "Inspected access provides connect to all reachable applications, but with limitations."
-        ->  outboundAllowedConnections().attemptConnectToApplicationsInspected,
-            applications.networkConnectInspected,
-            networkForwardingInspected,
-            accessNetworkData,
-            deny
-
-      | networkForwardingUninspected @hidden
+      | networkForwarding @hidden
         developer info: "By using the allowed connections (connection rules), uninspected forwarding from one network to another network or applications can happen."
-          ->  outboundAllowedConnections().attemptAccessNetworksUninspected,
-              outboundAllowedConnections().attemptConnectToApplicationsUninspected,
-              networkForwardingInspected
-
-      | networkForwardingInspected @hidden
-        developer info: "By using the allowed connections (connection rules), inspected forwarding from one network to another network or applications can happen."
-          ->  outboundAllowedConnections().attemptAccessNetworksInspected,
-              outboundAllowedConnections().attemptConnectToApplicationsInspected
+          ->  outboundAllowedConnections().attemptAccessNetworks,
+              outboundAllowedConnections().attemptConnectToApplications
 
       | deny {A}
         user info: "If a DoS is performed it affects, the applications communicating over the network as well as the connected application."
@@ -106,34 +44,7 @@ category Networking {
 
       | accessNetworkData @hidden
         developer info: "Access also the data that are network-wide available."
-        ->  attemptEavesdrop,
-            attemptAdversaryInTheMiddle
-
-      # eavesdropDefense
-        user info: "This defense protects from eavesdrop attacks. If this defense is disabled, then it is equivalent to the network being considered a broadcast network."
-        modeler info: "If this defense is enabled, attacks such as ARP spoofing should however, still be possible."
-        ->  eavesdropDefenseBypassed
-
-      | bypassEavesdropDefense [VeryHardAndUncertain]
-        user info: "The eavesdrop defense can be bypassed."
-        ->  eavesdropDefenseBypassed
-
-      | eavesdropDefenseBypassed @hidden
-        developer info: "The Eavesdrop defense is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  successfulEavesdrop
-
-      | attemptEavesdrop @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulEavesdrop,
-            bypassEavesdropDefense
-
-      & successfulEavesdrop @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  eavesdrop
-
-      | eavesdrop {C}
-        user info: "An attacker that performs an eavesdrop attack on a network tries to access all the transferred data over that network."
-        ->  transitData.attemptRead
+        ->  attemptAdversaryInTheMiddle
 
       # adversaryInTheMiddleDefense
         user info: "This defense protects against adversary-in-the-middle (AitM) attacks that are originating either form the network layer (like ARP spoofing) or by manipulating the higher network layers (like DNS poisoning)."
@@ -158,7 +69,7 @@ category Networking {
 
       | adversaryInTheMiddle {C, I}
         user info: "An attacker that performs a AitM attack on a network tries to read and modify all the transferred data over that network."
-        ->  eavesdrop,
+        ->  transitData.attemptRead,
             transitData.attemptWrite
     }
 
@@ -171,8 +82,8 @@ category Networking {
 
       | fullAccess {I, A}
         developer info: "If full access is achieved on RoutingFirewall then it is 0wned and all connections can be allowed! This can happen by compromising the manager application."
-        +>  (connectionRules.networks \/ connectionRules.outNetworks \/ connectionRules.inNetworks \/ connectionRules.diodeInNetworks).accessUninspected,
-            connectionRules.applications.networkConnectUninspected
+        +>  (connectionRules.networks \/ connectionRules.outNetworks \/ connectionRules.inNetworks \/ connectionRules.diodeInNetworks).access,
+            connectionRules.applications.networkConnect
     }
 
     asset ConnectionRule
@@ -192,72 +103,31 @@ category Networking {
 
       | restrictedBypassed @hidden
         developer info: "The restricted defense is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  successfulAccessNetworksUninspected,
-            successfulAccessNetworksInspected,
-            connectToApplicationsUninspected,
-            connectToApplicationsInspected,
+        ->  successfulAccessNetworks,
+            connectToApplications,
             deny
 
-      # payloadInspection [Disabled]
-        user info: "If enabled, then the traffic is considered to be inspected and filtered by an IDPS that can detect and stop malicious payloads, effectively allowing only legitimate communication(i.e. network-level vulnerabilities cannot be exploited, unsafe actions that the user may taken that would benefit the attacker are also prevented)."
-        ->  payloadInspectionBypassed
-
-      | bypassPayloadInspection [VeryHardAndUncertain]
-        user info: "Payload inspection can be bypassed."
-        ->  payloadInspectionBypassed
-
-      | payloadInspectionBypassed @hidden
-        developer info: "Payload inspection is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  successfulAccessNetworksUninspected,
-            connectToApplicationsUninspected
-
-      | attemptAccessNetworksUninspected @hidden
+      | attemptAccessNetworks @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulAccessNetworksUninspected,
-            bypassRestricted,
-            bypassPayloadInspection
-
-      | attemptAccessNetworksInspected @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  successfulAccessNetworksInspected,
+        ->  successfulAccessNetworks,
             bypassRestricted
 
-      & successfulAccessNetworksUninspected @hidden
+      & successfulAccessNetworks @hidden
         developer info: "Intermediate attack step to model defenses."
-        ->  accessNetworksUninspected
+        ->  accessNetworks
 
-      & successfulAccessNetworksInspected @hidden
-        developer info: "Intermediate attack step to model defenses."
-        ->  accessNetworksInspected
-
-      | accessNetworksUninspected
+      | accessNetworks
         developer info: "Access all networks that are associated with this ConnectionRule, without any restriction due to inspection."
-        ->  (networks  \/ inNetworks  \/ diodeInNetworks).accessUninspected,
-            accessNetworksInspected
+        ->  (networks  \/ inNetworks  \/ diodeInNetworks).access
 
-      | accessNetworksInspected
-        developer info: "Access all networks that are associated with this ConnectionRule, but taking into account that the traffic payload is being inspected."
-        ->  (networks  \/ inNetworks  \/ diodeInNetworks).accessInspected
-
-      | attemptConnectToApplicationsUninspected @hidden
+      | attemptConnectToApplications @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  connectToApplicationsUninspected,
-            bypassRestricted,
-            bypassPayloadInspection
-
-      | attemptConnectToApplicationsInspected @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  connectToApplicationsInspected,
+        ->  connectToApplications,
             bypassRestricted
 
-      & connectToApplicationsUninspected @hidden
+      & connectToApplications
         developer info: "Connect to all the (server) Applications that are associated with this ConnectionRule, without any restriction due to inspection."
-        ->  receiverApplications().networkConnectUninspected,
-            receiverApplications().networkConnectInspected
-
-      & connectToApplicationsInspected @hidden
-        developer info: "Connect to all the (server) Applications that are associated with this ConnectionRule, but taking into account that the traffic payload is being inspected. This attack step is used to allow legitimate traffic even when payload inspection is enabled on the connection."
-        ->  receiverApplications().networkConnectInspected
+        ->  receiverApplications().networkConnect
 
       | attemptDeny @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
