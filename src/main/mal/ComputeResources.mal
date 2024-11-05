@@ -29,9 +29,9 @@ category ComputeResources {
         ->  useVulnerability,
             localAccess,
             networkAccess,
-            read,
-            modify,
-            deny
+            successfulRead,
+            successfulModify,
+            successfulDeny
 
       | attemptUseVulnerability @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
@@ -50,7 +50,8 @@ category ComputeResources {
 
       | networkConnect @hidden
         developer info: "Intermediate attack step."
-        ->  networkAccess
+        ->  networkAccess,
+            attemptUseVulnerability
 
       | accessNetworkAndConnections @hidden
         developer info: "The attacker can access outgoing and bidirectional networks and connections associated with the application."
@@ -88,9 +89,13 @@ category ComputeResources {
 
       | attemptRead @hidden
         developer info: "Intermediate attack step to allow for defenses."
+        ->  successfulRead
+
+      & successfulRead @hidden
+        developer info: "Intermediate attack step to model defenses."
         ->  read
 
-      & read {C}
+      | read {C}
         user info: "The attacker can read some or all of this service's (and executed by this) source code and/or data (both local and sent/received)."
         ->  containedData.attemptRead,
             appExecutedApps.attemptRead, // Read all applications executed by this (host) application
@@ -99,9 +104,14 @@ category ComputeResources {
 
       | attemptModify @hidden
         developer info: "Intermediate attack step to allow for defenses."
+        ->  successfulModify
+
+      & successfulModify @hidden
+        developer info: "Intermediate attack step to model defenses."
         ->  modify
 
-      & modify {I}
+
+      | modify {I}
         user info: "The attacker can modify some or all of this service's (and executed by this) source code and/or data."
         ->  fullAccess,
             containedData.attemptWrite,
@@ -110,9 +120,14 @@ category ComputeResources {
 
       | attemptDeny @hidden
         developer info: "Intermediate attack step to allow for defenses."
+        ->  successfulDeny
+
+      & successfulDeny @hidden
+        developer info: "Intermediate attack step to model defenses."
         ->  deny
 
-      & deny {A}
+
+      | deny {A}
         user info: "The attacker can deny some or all functionality and data pertaining to this application/service as well as executed applications."
         ->  containedData.attemptDeny,
             appExecutedApps.attemptDeny,
@@ -152,7 +167,7 @@ category ComputeResources {
         user info: "The IDPS is no longer able to protect the apps assigned to it if it has been compromised itself."
         +>  effectivenessBypassed
 
-      & deny {A}
+      | deny {A}
         developer info: "The IDPS is no longer able to protect the apps assigned to it if it has been denied itself."
         +>  effectivenessBypassed
     }

@@ -72,7 +72,7 @@ category Networking {
     asset RoutingFirewall extends Application
       user info: "A routing firewall specifies a router with firewall capabilities that connects many networks."
     {
-      & deny {A}
+      | deny {A}
        user info: "A DoS attack should cascade on the connected networks and associated connections"
         ->  connectionRules.attemptDeny
 
