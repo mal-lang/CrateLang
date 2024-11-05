@@ -49,8 +49,7 @@ category ComputeResources {
         user info: "The attacker can interface with the Application without going through networking communications. This is achieved by gaining full access on a hosted Application, specific access on the hosting Application, physical access on the hardware on which the Application is running, or via unsafe user activity."
         ->  localAccess,
             specificAccessFromLocalConnection,
-            attemptUseVulnerability, // Attempt to exploit all the vulnerabilities associated with the Application
-            allVulnerabilities().localAccessAchieved
+            attemptUseVulnerability // Attempt to exploit all the vulnerabilities associated with the Application
 
       | networkConnect @hidden
         developer info: "Intermediate attack step."
@@ -91,14 +90,12 @@ category ComputeResources {
       | authenticate
         user info: "The attacker is able to authenticate with the appropriate high-level privileges."
         ->  localAccess,
-            networkAccess,
-            allVulnerabilities().highPrivilegesAchieved
+            networkAccess
 
       | specificAccessAuthenticate
         user info: "The attacker is able to authenticate with the appropriate low-level privileges."
         ->  specificAccessFromLocalConnection,
-            specificAccessFromNetworkConnection,
-            allVulnerabilities().lowPrivilegesAchieved
+            specificAccessFromNetworkConnection
 
       & localAccess @hidden
         developer info: "Intermediate attack steps for modeling the two requirements (reachability and authentication) for full access."
