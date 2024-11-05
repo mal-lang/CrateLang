@@ -27,8 +27,6 @@ category ComputeResources {
         user info: "This defense is used to reason about the attack vectors introduced by this asset. It should be used to model the possibility that the Application does not actually exist. Typically this is useful to see what attack steps are removed if a particular non-essential component(e.g. a plugin, library, feature, or service)."
         developer info: "This defense allows for both speculation about the presence of a particular application and to suggest that if it is possible removing it may restrict the attacker's actions."
         ->  useVulnerability,
-            specificAccessFromLocalConnection,
-            specificAccessFromNetworkConnection,
             localAccess,
             networkAccess,
             read,
@@ -48,40 +46,17 @@ category ComputeResources {
       | localConnect
         user info: "The attacker can interface with the Application without going through networking communications. This is achieved by gaining full access on a hosted Application, specific access on the hosting Application, physical access on the hardware on which the Application is running, or via unsafe user activity."
         ->  localAccess,
-            specificAccessFromLocalConnection,
             attemptUseVulnerability // Attempt to exploit all the vulnerabilities associated with the Application
 
       | networkConnect @hidden
         developer info: "Intermediate attack step."
         ->  networkAccess
 
-      | specificAccessNetworkConnect @hidden
-        developer info: "Intermediate attack step."
-        ->  specificAccessFromNetworkConnection
-
       | accessNetworkAndConnections @hidden
         developer info: "The attacker can access outgoing and bidirectional networks and connections associated with the application."
         ->  networks.access,
             outgoingApplicationConnections().attemptConnectToApplications,
             outgoingApplicationConnections().attemptAccessNetworks
-
-      & specificAccessFromLocalConnection @hidden
-        developer info: "Intermediate attack steps for modeling the two requirements (reachability and authentication) for specific access."
-        ->  specificAccess
-
-      & specificAccessFromNetworkConnection @hidden
-        developer info: "Intermediate attack steps for modeling the two requirements (reachability and authentication) for specific access."
-        ->  specificAccess
-
-      | specificAccess
-        user info: "The adversary is able to gain low-privilege access on the Application which allows them to access the networks and connections associated with it and locally connect to hosted Applications. Additionally, if they have the required privileges the attacker may also access data hosted, sent, or received by the Application."
-        ->  appExecutedApps.localConnect, // An attacker with low-privilege access on the executing instance is assumed to be able to locally interact with the executed applications.
-            specificAccessRead,
-            specificAccessModify,
-            specificAccessDelete,
-            bypassContainerization,
-            attemptUseVulnerability, // Attempt to exploit all the vulnerabilities associated with the Application
-            accessNetworkAndConnections // and access the network(s) and connections on/to which the app is connected
 
       | bypassContainerization [HardAndUncertain]
         user info: "The attacker is able to break out of an application container/sandbox and try to exploit any vulnerability of the host application."
@@ -91,11 +66,6 @@ category ComputeResources {
         user info: "The attacker is able to authenticate with the appropriate high-level privileges."
         ->  localAccess,
             networkAccess
-
-      | specificAccessAuthenticate
-        user info: "The attacker is able to authenticate with the appropriate low-level privileges."
-        ->  specificAccessFromLocalConnection,
-            specificAccessFromNetworkConnection
 
       & localAccess @hidden
         developer info: "Intermediate attack steps for modeling the two requirements (reachability and authentication) for full access."
@@ -114,8 +84,7 @@ category ComputeResources {
             executionPrivIAMs.attemptAssume,  // Assume also the execution privilege identities of this application to the access to the entire execution context
             accessNetworkAndConnections,  // and access the network(s) and connections on/to which the app is connected
             hostApp.localConnect,    // and localConnect on the host application
-            managedRoutingFw.attemptModify, // if the routing firewall manager app is compromised the routing firewall should also be compromised
-            specificAccess // And also provide specificAccess, mainly for completeness and more intuitive results
+            managedRoutingFw.attemptModify // if the routing firewall manager app is compromised the routing firewall should also be compromised
 
       | attemptRead @hidden
         developer info: "Intermediate attack step to allow for defenses."
@@ -128,12 +97,6 @@ category ComputeResources {
             sentData.attemptRead, // Both sent and received Data can be read
             receivedData.attemptRead
 
-      | specificAccessRead {C}
-        user info: "The attacker can read the service's source code and/or sent and received Data, given the necessary permissions"
-        ->  containedData.authorizedReadFromApplication,
-            sentData.authorizedReadFromApplication, // Both Data sent and received can be read given the necessary permissions
-            receivedData.authorizedReadFromApplication
-
       | attemptModify @hidden
         developer info: "Intermediate attack step to allow for defenses."
         ->  modify
@@ -145,11 +108,6 @@ category ComputeResources {
             appExecutedApps.attemptModify, // Gain access on all applications executed by this (host) application
             sentData.attemptWrite // Sent Data can be written/modified
 
-      | specificAccessModify {I}
-        user info: "The attacker can modify the service's source code and/or sent  Data, given the necessary permissions"
-        ->  containedData.authorizedWriteFromApplication,
-            sentData.authorizedWriteFromApplication // Sent Data can be written given the necessary permissions
-
       | attemptDeny @hidden
         developer info: "Intermediate attack step to allow for defenses."
         ->  deny
@@ -159,11 +117,6 @@ category ComputeResources {
         ->  containedData.attemptDeny,
             appExecutedApps.attemptDeny,
             sentData.attemptDeny // Sent Data can also be denied
-
-      | specificAccessDelete {A}
-        user info: "The attacker can delete some or all functionality and data pertaining to this application/service as well as executed applications, given the necessary permissions"
-        ->  containedData.authorizedDeleteFromApplication,
-            sentData.authorizedDeleteFromApplication // Sent Data can be deleted given the necessary permissions
 
       & denyFromNetworkingAsset @hidden
         developer info: "This is an intermediate attack step to only allow deny on an application when all the connection rules and networks associated with it are denied, because an app can be serving on many different ports."

@@ -32,7 +32,6 @@ category IAM {
         user info: "When an attacker is able to assume an IAM asset the privileges associated with it can always be exploited, other behaviour is asset specific."
         ->  execPrivApps.authenticate,
             highPrivApps.authenticate,
-            lowPrivApps.specificAccessAuthenticate,
             readPrivData.authorizedReadFromIAM,
             writePrivData.authorizedWriteFromIAM,
             deletePrivData.authorizedDeleteFromIAM,
@@ -110,8 +109,6 @@ associations {
       user info: "Every application executes on a system with privileges of a specified identity on the system. If the application is compromised then the privileges should be compromised."
   IAMObject        [highPrivAppIAMs]      * <-- HighPrivilegeApplicationAccess --> * [highPrivApps]     Application
       user info: "High privilege application access on an Application results in the (full) access/compromise of the application and all the child applications."
-  IAMObject        [lowPrivAppIAMs]       * <-- LowPrivilegeApplicationAccess  --> * [lowPrivApps]      Application
-      user info: "Low privilege application access on an Application allows only the local interaction with the application and all the specified privileges."
   // Finally, Access control on data
   IAMObject        [readingIAMs]          * <-- ReadPrivileges        --> *    [readPrivData]           Data
   IAMObject        [writingIAMs]          * <-- WritePrivileges       --> *    [writePrivData]          Data
