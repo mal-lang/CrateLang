@@ -86,6 +86,10 @@ category IAM {
         ->  guessCredentials,
             requiredFactors.weakCredentials
 
+      | attemptGuessCredentials
+        ->  guessCredentials,
+            credentials*.attemptGuessCredentials
+
       & guessCredentials @hidden [HardAndUncertain]
         developer info: "The attacker can try to just guess a set of credentials. The likelihood of succeeding is dependent on how strong the credentials are."
         modeler info: "The guessability of the Credentials is influenced by the notGuessable defense on this asset and the securityAwareness defense on the User associated with the Identity that these Credentials belong to. If either the User or Identity associations are missing the assumption is made that the crentials are guessable and only the notGuessable defense would play a role in restricting this attack step."
