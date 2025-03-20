@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 coreLang contributors <https://mal-lang.org/coreLang/contributors.html>
+ * Copyright 2019-2025 tyrLang contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ category ComputeResources {
 
       # effectiveness [Enabled]
         user info: "The effectiveness defense represents how capable the IDPS is to prevent disruptions from occurring on the associated applications."
-        modeler info: "The notPresent defense should inversely impact the effectiveness defense. However, because this is not currently implemented in coreLang it is up to the modeler to properly take this into account when setting the values of these defenses."
+        modeler info: "The notPresent defense should inversely impact the effectiveness defense. However, because this is not currently implemented in tyrLang it is up to the modeler to properly take this into account when setting the values of these defenses."
         ->  effectivenessBypassed
 
       | bypassEffectiveness [VeryHardAndUncertain]
