@@ -16,8 +16,9 @@
 
 category IAM {
 
-    abstract asset IAMObject
-      user info: "An IAM object represents the base logic shared by all assets used for Identity and Access Management roles(Identity, Group, Privileges)."
+    asset Identity
+      user info: "An identity models an IAM identity that should then be associated with privileges on other instances."
+      developer info: "An identity can be visualised as a group of assumable roles that can be associated with many credentials."
     {
       # notPresent [Disabled]
         user info: "This defense is used to reason about the attack vectors introduced by this asset. It should be used to model the possibility that the IAM object does not actually exist."
@@ -29,42 +30,21 @@ category IAM {
         ->  assume
 
       & assume
-        user info: "When an attacker is able to assume an IAM asset the privileges associated with it can always be exploited, other behaviour is asset specific."
+        user info: "After authentication or compromise of an account/identity, assume its privileges."
+        developer info: "This is both legitimate and illegitimate access! Also assume all the privileges of the parent identities (on the above level/inherited by this identity) because those represent the group of (inherited) roles."
         ->  execPrivApps.authenticate,
-            highPrivApps.authenticate,
             readPrivData.authorizedReadFromIAM,
             writePrivData.authorizedWriteFromIAM,
             deletePrivData.authorizedDeleteFromIAM,
-            managedIAMs.attemptAssume
+            managedIAMs.attemptAssume,
+            parentId.attemptAssume
 
-    }
-
-    asset Identity extends IAMObject
-      user info: "An identity models an IAM identity that should then be associated with privileges on other instances."
-      developer info: "An identity can be visualised as a group of assumable roles that can be associated with many credentials."
-    {
-      & assume {C,I,A}
-        user info: "After authentication or compromise of an account/identity, assume its privileges."
-        developer info: "This is both legitimate and illegitimate access! Also assume all the privileges of the parent identities (on the above level/inherited by this identity) because those represent the group of (inherited) roles."
-        +>  parentId.attemptAssume
     }
 
     asset Credentials
       user info: "Credentials can be used to get access to an Identity, but they can also be used as an encryption/signing key for Data."
       modeler info: "Credentials represent a variety of access control mechanism(e.g. username and password pair, keycards, biometric data)."
     {
-      # notDisclosed [Enabled]
-        user info: "Describes the case where the password/credential is leaked to some location, it can then be available to the attacker."
-        ->  useLeakedCredentials
-
-      # notGuessable [Enabled]
-        user info: "Describes if the credentials can be guessed by the attacker(i.e. they represent a password or passphrase)."
-        ->  guessCredentials
-
-      | useLeakedCredentials [EasyAndCertain]
-        user info: "If the password/credential is leaked to some location, it can then be available to the attacker and therefore it can be used."
-        ->  attemptUse
-
       | attemptUse @hidden
         developer info: "In order to use these credentials the attacker may require additional factors."
         ->  use
@@ -73,18 +53,7 @@ category IAM {
         user info: "The attacker is using the credentials to perform a legitimate authentication."
         ->  identities.attemptAssume,
             encryptedData.accessDecryptedData,
-            signedData.accessSpoofedData,
             credentials.use // these credentials may serve as additional required factors for other credentials in a multi-factor authentication
-
-      !E missingIdentity @hidden
-        developer info: "If there are no Identities asociated with these Credentials we make the worst case scenario assumption regarding the strength of the Credentials."
-        <-  identities
-        ->  weakCredentials
-
-      | weakCredentials @hidden
-        developer info: "Intermediate step used to represent how weak the credentials the user employs are. This is inversely related to the securityAwareness defense on the User asset associated with the Identity to which these Credentials belong. If either the User or Identity associations are missing the assumption is made that the crentials are weak and therefore guessable by the attacker."
-        ->  guessCredentials,
-            requiredFactors.weakCredentials
 
       | attemptGuessCredentials
         ->  guessCredentials,
@@ -98,26 +67,22 @@ category IAM {
 }
 
 associations {
-  Credentials      [encryptCreds]      0..1 <-- EncryptionCredentials --> *    [encryptedData]          Data
+  Credentials     [encryptCreds]      0..1 <-- EncryptionCredentials --> *    [encryptedData]          Data
       user info: "Encrypted data can be associated with the relevant encryption credentials."
-  Credentials      [signingCreds]      0..1 <-- SigningCredentials    --> *    [signedData]             Data
-      user info: "Signed data can be associated with the relevant signing credentials."
-  Credentials      [credentials]          * <-- ConditionalAuthentication --> * [requiredFactors]       Credentials
+  Credentials     [credentials]          * <-- ConditionalAuthentication --> * [requiredFactors]       Credentials
       user info: "Credentials can be associated with other Credentials to depict conditional authentication procedures, such as multi-factor authentication."
   // ### Access Control happens below
-  Identity         [identities]           * <-- IdentityCredentials   --> *    [credentials]            Credentials
-  Identity         [parentId]             * <-- CanAssume             --> *    [childId]                Identity
+  Identity        [identities]           * <-- IdentityCredentials   --> *    [credentials]            Credentials
+  Identity        [parentId]             * <-- CanAssume             --> *    [childId]                Identity
       user info: "Starting from a parent Identity, the child Identities can be assumed due to inheritance."
   // Then, Access Control on application level
-  IAMObject        [executionPrivIAMs]    * <-- ExecutionPrivilegeAccess       --> * [execPrivApps]     Application
+  Identity        [executionPrivIAMs]    * <-- ExecutionPrivilegeAccess       --> * [execPrivApps]     Application
       user info: "Every application executes on a system with privileges of a specified identity on the system. If the application is compromised then the privileges should be compromised."
-  IAMObject        [highPrivAppIAMs]      * <-- HighPrivilegeApplicationAccess --> * [highPrivApps]     Application
-      user info: "High privilege application access on an Application results in the (full) access/compromise of the application and all the child applications."
   // Finally, Access control on data
-  IAMObject        [readingIAMs]          * <-- ReadPrivileges        --> *    [readPrivData]           Data
-  IAMObject        [writingIAMs]          * <-- WritePrivileges       --> *    [writePrivData]          Data
-  IAMObject        [deletingIAMs]         * <-- DeletePrivileges      --> *    [deletePrivData]         Data
-  // Self-referential associations for the IAMObject asset
-  IAMObject        [managers]             * <-- AccountManagement     --> *    [managedIAMs]            IAMObject
+  Identity        [readingIAMs]          * <-- ReadPrivileges        --> *    [readPrivData]           Data
+  Identity        [writingIAMs]          * <-- WritePrivileges       --> *    [writePrivData]          Data
+  Identity        [deletingIAMs]         * <-- DeletePrivileges      --> *    [deletePrivData]         Data
+  // Self-referential associations for the Identity asset
+  Identity        [managers]             * <-- AccountManagement     --> *    [managedIAMs]            Identity
       user info: "Identities, Groups, and Privileges may have account management roles for other Identities, Groups, and Privileges."
 }

@@ -92,22 +92,9 @@ category DataResources {
         <-  encryptCreds
         ->  accessUnencryptedData
 
-      !E dataSigned @hidden
-        developer info: "If the data are signed then writing them requires the associated signing credentials/key. Data will be considered signed if there is at least one Credentials asset associated with it. Otherwise, 'accessUnsignedData' is triggered."
-        <-  signingCreds
-        ->  accessUnsignedData
-
       & accessUnencryptedData @hidden
         developer info: "If data are unencrypted then access them."
         ->  accessDecryptedData
-
-      & accessUnsignedData @hidden
-        developer info: "If data are unsigned then alter them."
-        ->  accessSpoofedData
-
-      | accessSpoofedData @hidden
-        developer info: "Intermediate attack step to only allow effects of 'accessUnsignedData' on data after compromising the signing credentials or signing is disabled."
-        ->  successfulWrite
 
       | accessDecryptedData @hidden
         developer info: "Intermediate attack step to only allow effects of 'accessUnencryptedData' on data after compromising the encryption credentials or encryption is disabled."
