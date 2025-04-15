@@ -78,22 +78,13 @@ category Networking {
 
       # restricted [Disabled]
         user info: "The restricted defense can be used to probabilistically model the likelihood of both the protocols required by the attack being enabled or the existence of the ConnectionRule altogether."
-        ->  restrictedBypassed
-
-      | bypassRestricted [VeryHardAndUncertain]
-        user info: "The restricted defense can be bypassed."
-        ->  restrictedBypassed
-
-      | restrictedBypassed @hidden
-        developer info: "The restricted defense is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
         ->  accessNetworks,
             connectToApplications,
             deny
 
       | attemptAccessNetworks @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  accessNetworks,
-            bypassRestricted
+        ->  accessNetworks
 
       & accessNetworks
         developer info: "Access all networks that are associated with this ConnectionRule, without any restriction due to inspection."
@@ -101,8 +92,7 @@ category Networking {
 
       | attemptConnectToApplications @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  connectToApplications,
-            bypassRestricted
+        ->  connectToApplications
 
       & connectToApplications
         developer info: "Connect to all the (server) Applications that are associated with this ConnectionRule, without any restriction due to inspection."
@@ -110,8 +100,7 @@ category Networking {
 
       | attemptDeny @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  deny,
-            bypassRestricted
+        ->  deny
 
       & deny {A}
         user info: "If a connection rule is denied it affects the applications communicating over it."
