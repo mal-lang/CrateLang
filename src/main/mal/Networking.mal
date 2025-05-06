@@ -106,6 +106,17 @@ category Networking {
         user info: "If a connection rule is denied it affects the applications communicating over it."
         ->  allApplications().denyFromNetworkingAsset
     }
+
+    asset InternetworkConnectionRule
+    {
+      | attemptAccessNetworks @hidden
+        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
+        ->  accessNetworks
+
+      & accessNetworks
+        developer info: "Access all networks that are associated with this ConnectionRule, without any restriction due to inspection."
+        ->  interNetworks.access
+    }
 }
 
 associations {
@@ -129,4 +140,6 @@ associations {
       user info: "Two or more networks can also be inter-connected via a uni-directional connection. Out means that outgoing traffic from the network is allowed."
   Network          [diodeInNetworks]      * <-- DiodeInNetworkConnection --> * [diodeIngoingNetConnections] ConnectionRule
       user info: "Two or more networks can also be inter-connected via a uni-directional connection that acts like a diode. That means that no responses can come back after connection initiation."
+  Network          [interNetworks]             * <--  InternetworkConnection --> *    [interNetConnections] InternetworkConnectionRule
+      user info: "Two or more networks can also be inter-connected via a bidirectional connection."
 }
