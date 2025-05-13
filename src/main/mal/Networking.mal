@@ -35,6 +35,7 @@ category Networking {
       | networkForwarding @hidden
         developer info: "By using the allowed connections (connection rules), uninspected forwarding from one network to another network or applications can happen."
           ->  outboundAllowedConnections().attemptAccessNetworks,
+              interNetConnections.attemptAccessNetworks,
               outboundAllowedConnections().attemptConnectToApplications
 
       | deny {A}
