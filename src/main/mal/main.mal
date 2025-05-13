@@ -15,6 +15,6 @@
  */
 
 #id: "org.mal-lang.tyrLang"
-#version: "0.0.6"
+#version: "0.0.7"
 
 include "tyrLang.mal"
