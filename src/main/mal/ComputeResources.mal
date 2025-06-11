@@ -51,7 +51,8 @@ category ComputeResources {
         developer info: "The attacker can access outgoing and bidirectional networks and connections associated with the application."
         ->  networks.access,
             outgoingApplicationConnections().attemptConnectToApplications,
-            outgoingApplicationConnections().attemptAccessNetworks
+            outgoingApplicationConnections().attemptAccessNetworks,
+            interAppConnections.attemptConnectToApplications
 
       | bypassContainerization [HardAndUncertain]
         user info: "The attacker is able to break out of an application container/sandbox and try to exploit any vulnerability of the host application."

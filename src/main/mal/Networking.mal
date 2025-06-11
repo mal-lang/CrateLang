@@ -115,8 +115,19 @@ category Networking {
         ->  accessNetworks
 
       & accessNetworks
-        developer info: "Access all networks that are associated with this ConnectionRule, without any restriction due to inspection."
+        developer info: "Access all networks that are associated with this ConnectionRule."
         ->  interNetworks.access
+    }
+    asset InterappConnectionRule
+    {
+      | attemptConnectToApplications @hidden
+        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
+        ->  connectToApplications
+
+      & connectToApplications
+        developer info: "Connect to all the Applications that are associated with this ConnectionRule."
+        ->  interApps.networkConnect
+
     }
 }
 
@@ -143,4 +154,6 @@ associations {
       user info: "Two or more networks can also be inter-connected via a uni-directional connection that acts like a diode. That means that no responses can come back after connection initiation."
   Network          [interNetworks]             * <--  InternetworkConnection --> *    [interNetConnections] InternetworkConnectionRule
       user info: "Two or more networks can also be inter-connected via a bidirectional connection."
+  Application      [interApps]               * <--  InterappConnection --> *    [interAppConnections] InterappConnectionRule
+      user info: "Two or more applications can also be inter-connected via a bidirectional connection."
 }
