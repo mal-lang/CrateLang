@@ -86,10 +86,7 @@ category ComputeResources {
 
       | read {C}
         user info: "The attacker can read some or all of this service's (and executed by this) source code and/or data (both local and sent/received)."
-        ->  containedData.attemptRead,
-            appExecutedApps.attemptRead, // Read all applications executed by this (host) application
-            sentData.attemptRead, // Both sent and received Data can be read
-            receivedData.attemptRead
+        ->  appExecutedApps.attemptRead // Read all applications executed by this (host) application
 
       | attemptModify @hidden
         developer info: "Intermediate attack step to allow for defenses."
@@ -102,9 +99,7 @@ category ComputeResources {
       | modify {I}
         user info: "The attacker can modify some or all of this service's (and executed by this) source code and/or data."
         ->  fullAccess,
-            containedData.attemptWrite,
-            appExecutedApps.attemptModify, // Gain full access to all applications executed by this (host) application
-            sentData.attemptWrite // Sent Data can be written/modified
+            appExecutedApps.attemptModify // Gain full access to all applications executed by this (host) application
 
       | attemptDeny @hidden
         developer info: "Intermediate attack step to allow for defenses."
@@ -117,9 +112,7 @@ category ComputeResources {
 
       | deny {A}
         user info: "The attacker can deny some or all functionality and data pertaining to this application/service as well as executed applications."
-        ->  containedData.attemptDeny,
-            appExecutedApps.attemptDeny,
-            sentData.attemptDeny // Sent Data can also be denied
+        -> appExecutedApps.attemptDeny
 
       & denyFromNetworkingAsset @hidden
         developer info: "This is an intermediate attack step to only allow deny on an application when all the connection rules and networks associated with it are denied, because an app can be serving on many different ports."

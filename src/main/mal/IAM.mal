@@ -33,9 +33,6 @@ category IAM {
         user info: "After authentication or compromise of an account/identity, assume its privileges."
         developer info: "This is both legitimate and illegitimate access! Also assume all the privileges of the parent identities (on the above level/inherited by this identity) because those represent the group of (inherited) roles."
         ->  execPrivApps.authenticate,
-            readPrivData.authorizedReadFromIAM,
-            writePrivData.authorizedWriteFromIAM,
-            deletePrivData.authorizedDeleteFromIAM,
             managedIAMs.attemptAssume,
             parentId.attemptAssume
 
@@ -52,7 +49,6 @@ category IAM {
       & use {C}
         user info: "The attacker is using the credentials to perform a legitimate authentication."
         ->  identities.attemptAssume,
-            encryptedData.accessDecryptedData,
             credentials.use // these credentials may serve as additional required factors for other credentials in a multi-factor authentication
 
       | attemptGuessCredentials
@@ -67,8 +63,6 @@ category IAM {
 }
 
 associations {
-  Credentials     [encryptCreds]      0..1 <-- EncryptionCredentials --> *    [encryptedData]          Data
-      user info: "Encrypted data can be associated with the relevant encryption credentials."
   Credentials     [credentials]          * <-- ConditionalAuthentication --> * [requiredFactors]       Credentials
       user info: "Credentials can be associated with other Credentials to depict conditional authentication procedures, such as multi-factor authentication."
   // ### Access Control happens below
@@ -78,10 +72,6 @@ associations {
   // Then, Access Control on application level
   Identity        [executionPrivIAMs]    * <-- ExecutionPrivilegeAccess       --> * [execPrivApps]     Application
       user info: "Every application executes on a system with privileges of a specified identity on the system. If the application is compromised then the privileges should be compromised."
-  // Finally, Access control on data
-  Identity        [readingIAMs]          * <-- ReadPrivileges        --> *    [readPrivData]           Data
-  Identity        [writingIAMs]          * <-- WritePrivileges       --> *    [writePrivData]          Data
-  Identity        [deletingIAMs]         * <-- DeletePrivileges      --> *    [deletePrivData]         Data
   // Self-referential associations for the Identity asset
   Identity        [managers]             * <-- AccountManagement     --> *    [managedIAMs]            Identity
       user info: "Identities, Groups, and Privileges may have account management roles for other Identities, Groups, and Privileges."

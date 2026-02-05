@@ -15,7 +15,6 @@
  */
 
 include "ComputeResources.mal"
-include "DataResources.mal"
 include "IAM.mal"
 include "Networking.mal"
 include "Vulnerability.mal"
