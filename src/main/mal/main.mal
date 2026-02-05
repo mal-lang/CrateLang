@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 tyrLang contributors
+ * Copyright 2019-2025 crateLang contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#id: "org.mal-lang.tyrLang"
+#id: "org.mal-lang.crateLang"
 #version: "0.0.8"
 
-include "tyrLang.mal"
+include "crateLang.mal"

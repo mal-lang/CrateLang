@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 tyrLang contributors
+ * Copyright 2019-2025 crateLang contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ category Networking {
         user info: "If a DoS is performed it affects, the applications communicating over the network as well as the connected application."
         ->  allNetConnections().attemptDeny,
             allowedApplicationConnectionsApplications().denyFromNetworkingAsset
-            
+
     }
 
     asset ConnectionRule
