@@ -30,7 +30,8 @@ category ComputeResources {
             networkAccess,
             successfulRead,
             successfulModify,
-            successfulDeny
+            successfulDeny,
+            executionPrivIAMs.assume
 
       | attemptUseVulnerability @hidden
         developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
