@@ -15,6 +15,6 @@
  */
 
 #id: "org.mal-lang.crateLang"
-#version: "0.0.8"
+#version: "0.0.9"
 
 include "crateLang.mal"
