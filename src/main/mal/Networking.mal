@@ -29,7 +29,6 @@ category Networking {
         ->  outboundAllowedConnections().attemptConnectToApplications,
             applications.networkConnect,
             networkForwarding,
-            accessNetworkData,
             deny
 
       | networkForwarding @hidden
@@ -42,32 +41,7 @@ category Networking {
         user info: "If a DoS is performed it affects, the applications communicating over the network as well as the connected application."
         ->  allNetConnections().attemptDeny,
             allowedApplicationConnectionsApplications().denyFromNetworkingAsset
-
-      | accessNetworkData @hidden
-        developer info: "Access also the data that are network-wide available."
-        ->  attemptAdversaryInTheMiddle
-
-      # adversaryInTheMiddleDefense
-        user info: "This defense protects against adversary-in-the-middle (AitM) attacks that are originating either form the network layer (like ARP spoofing) or by manipulating the higher network layers (like DNS poisoning)."
-        ->  adversaryInTheMiddleDefenseBypassed
-
-      | bypassAdversaryInTheMiddleDefense [VeryHardAndUncertain]
-        user info: "The adversary in the middle defense can be bypassed."
-        ->  adversaryInTheMiddleDefenseBypassed
-
-      | adversaryInTheMiddleDefenseBypassed @hidden
-        developer info: "The adversary in the middle defense is bypassed either because it was not set, the attacker was able to circumvent it through additional effort."
-        ->  adversaryInTheMiddle
-
-      | attemptAdversaryInTheMiddle @hidden
-        developer info: "Intermediate attack step to allow for defenses and trigger bypasses."
-        ->  adversaryInTheMiddle,
-            bypassAdversaryInTheMiddleDefense
-
-      & adversaryInTheMiddle {C, I}
-        user info: "An attacker that performs a AitM attack on a network tries to read and modify all the transferred data over that network."
-        ->  transitData.attemptRead,
-            transitData.attemptWrite
+            
     }
 
     asset ConnectionRule
